@@ -1,36 +1,37 @@
 mtype = { Welcome, CardIn, PinEntered, PinAccepted, PrepareMoney, CardReturned, 
             Check, Abort, Passed, Failed, DBIdle, DBEntry};
-byte entered_pin = 123;
-byte store_pin = 1234;
+
+//Pin enterd by user is true or false
+bool pin_check = false;
+
+//chanel 
+chan ch_pinCheck = [0] of {byte}; // Channel for simulating PIN check communication
+chan ch_log = [0] of {byte}; // Channel for logging
 
 proctype InsertCard() {
     mtype state = Welcome;
     do
     :: state == Welcome -> 
         printf("Welcome to ATM\n");              
-        atomic{
-            printf("Please insert Card\n");
-            state = CardIn;
-        }
+        printf("Please insert Card\n");
+        state = CardIn;
+    
     :: state == CardIn -> 
         printf("Card inserted\n");
         atomic{
-            printf("Please Enter pin\n");
             state = PinEntered;
         }
          
     :: state == PinEntered -> printf("Pin Entered\n");
         if
-        ::true -> atomic{
-            printf("Pin Accepted\n");
+        ::ch_pinCheck ? 1 -> atomic{
             state = PinAccepted;
         }    
-        ::false -> atomic{
-            printf("Pin Rejected\n");
+        ::ch_pinCheck ? 0 -> atomic{
             state = Abort;
         }
         fi
-    :: state == PinAccepted -> printf("Pin Accepted\n");
+    :: state == PinAccepted -> 
         atomic{
             printf("Please take your money\n");
             state = PrepareMoney; 
@@ -55,51 +56,53 @@ proctype InsertCard() {
 
 proctype EnterPIN() {
     mtype state = Check;
-    bool pin_check = false;
-
+    
     do
     :: state == Check ->
         printf("Please Enter Pin\n");
-
         //Read PIN input
-        //Check pin
-        //pin_check = (entered_pin == store_pin);
-        
         if
-        :: pin_check -> state = Passed;
-        :: !pin_check -> state = Failed;
+        :: pin_check -> 
+            printf("Pin Accepted\n");
+            state = Passed;
+        :: pin_check == false -> 
+            printf("Pin Rejected\n");
+            state = Failed;
         fi
 
     :: state == Passed -> 
-        printf("Pin Accepted\n");
-        atomic {
-            printf("Card eject\n");
-            //state = Check;
-            break;
+        printf("Card eject\n");
+        atomic{
+            ch_pinCheck ! 1;
         }
+        break
 
     :: state == Failed ->
-        printf("Pin Rejected\n");
-        atomic {
-            printf("Card eject\n");
-            //state = Check;
+        printf("Card eject\n");
+        atomic{
+            ch_log ! 1;
+            ch_pinCheck ! 0;
             break;
         }
-
     od
 }
 
 proctype Database() {
     mtype state = DBIdle;
-
+    printf("Database is in Idle\n");
     do
-    :: state == DBIdle ->
+    :: ch_log ? 1->
         atomic {
+            printf("Reject\n");
             state = DBEntry;
+            printf("Data stored\n");
         }
     :: state == DBEntry ->
+        printf("Reject Card\n");
+        ch_log ! 0;
         atomic {
             state = DBIdle;
+            break;
         }
     od
 
@@ -107,8 +110,8 @@ proctype Database() {
 }
 
 init {
-    //run InsertCard();
+    run InsertCard();
     run EnterPIN();
-    //run Database();
+    run Database();
 }
 

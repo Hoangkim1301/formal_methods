@@ -1,9 +1,6 @@
 active proctype fns()
-{	/*
-	 * don't call this rand()...
-	 * to avoid a clash with the C library routine
-	 */
-	byte n ;	/* Start with 3 */
+{	
+	byte n ;	
 	do
 	    :: n = 3; 
 	    :: n = 4;
@@ -13,10 +10,10 @@ active proctype fns()
         :: n = 8;
         :: n = 9;
         :: n = 10; 
-	    :: break	/* or stop            */
+	    :: break	
 	od;
 
-    printf("n = %d\n", n);
+    printf("Random: n = %d\n", n);
 
     int result = 0;
     int temp = 0;
@@ -31,7 +28,7 @@ active proctype fns()
             :: else -> break;  
             fi;
         od
-    :: n != 3 -> result = ( n * ( n + 1) * ( 2 * n + 1 ) ) / 6;
+    :: else -> result = ( n * ( n + 1) * ( 2 * n + 1 ) ) / 6;
     fi;
     printf("result = %d\n", result);
 }
