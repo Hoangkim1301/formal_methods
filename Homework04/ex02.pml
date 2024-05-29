@@ -33,3 +33,14 @@ proctype traffic_light(chan button) {
     :: state == Yellow -> state = Red;  // Yellow to Red
     od
 }
+
+init {
+    run PedestrianLight(0);
+    run PedestrianLight(1);
+    run PedestrianLight(2);
+    run PedestrianLight(3);
+    run traffic_light(button0);
+    run traffic_light(button1);
+    run traffic_light(button2);
+    run traffic_light(button3);
+}

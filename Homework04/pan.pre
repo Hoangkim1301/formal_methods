@@ -1,0 +1,39 @@
+# 1 ".\\ex02.pml"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 ".\\ex02.pml"
+mtype = {RED, YELLOW, GREEN};
+mtype pedestrian = {RED, GREEN};
+
+
+chan pedestrian[4] = [0] of {mtype};
+chan traffic_light[4] = [0] of {mtype};
+
+active proctype PedestrianLight(byte id){
+    mtype state = Red;
+
+    do
+    :: state == Red ->
+        :: (id == 0 && button0?) -> state = Green
+        :: (id == 1 && button1?) -> state = Green
+        :: (id == 2 && button2?) -> state = Green
+        :: (id == 3 && button3?) -> state = Green
+    :: state == Green ->
+        :: (id == 0 && button0?) -> skip
+        :: (id == 1 && button1?) -> skip
+        :: (id == 2 && button2?) -> skip
+        :: (id == 3 && button3?) -> skip
+        :: button_release -> state = Red
+    od
+}
+
+proctype traffic_light(chan button) {
+    mtype state = Red;
+
+    do
+    :: state == Red -> state = RedYellow;
+    :: state == RedYellow -> state = Green;
+    :: state == Green -> state = Yellow;
+    :: state == Yellow -> state = Red;
+    od
+}
